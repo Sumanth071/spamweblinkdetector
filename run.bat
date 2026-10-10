@@ -6,8 +6,8 @@ echo ========================================================
 echo [1/2] Activating Python Virtual Environment...
 call .venv\Scripts\activate.bat
 
-echo [2/2] Launching Backend ML Service & Web Interface on http://localhost:5000 ...
-start http://localhost:5000
+echo [2/2] Launching Backend ML Service & Web Interface on http://localhost:5050 ...
+start http://localhost:5050
 python backend\app.py
 
 pause
