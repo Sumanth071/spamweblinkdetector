@@ -27,11 +27,16 @@ import {
   X,
   Database,
   Terminal,
-  ChevronRight
+  Sun,
+  Moon,
+  Sparkles,
+  TrendingUp,
+  FileCheck2,
+  AlertOctagon
 } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('home'); // 'home', 'features', 'performance', 'about'
+  const [activeTab, setActiveTab] = useState('home'); // 'home', 'phish_demo', 'legit_demo', 'features', 'performance', 'about'
   const [resultSubTab, setResultSubTab] = useState('overview'); // 'overview', 'deep', 'models', 'export'
   const [urlInput, setUrlInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -39,9 +44,10 @@ export default function App() {
   const [scanResult, setScanResult] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [copied, setCopied] = useState(false);
-  
+  const [isLightMode, setIsLightMode] = useState(false);
+
   // Real-time Feature Simulator State (Screen 4)
-  const [simDomainAge, setSimDomainAge] = useState(15); // years
+  const [simDomainAge, setSimDomainAge] = useState(15);
   const [simSslValid, setSimSslValid] = useState(true);
   const [simMxPresent, setSimMxPresent] = useState(false);
   const [simKeywords, setSimKeywords] = useState(false);
@@ -53,7 +59,7 @@ export default function App() {
   // Scan History
   const [historyList, setHistoryList] = useState([]);
 
-  // Benchmark permutation importance
+  // Benchmark Permutation Importance
   const [featureRanking, setFeatureRanking] = useState([
     { feature: 'Domain Age', importance: 0.22, percentage: '22%' },
     { feature: 'SSL Certificate Validity', importance: 0.18, percentage: '18%' },
@@ -79,6 +85,12 @@ export default function App() {
     "Applying Permutation-Selected optimal feature subset...",
     "Executing Dual Ensemble AI inference (XGBoost + Random Forest)..."
   ];
+
+  // Theme toggle
+  const toggleTheme = () => {
+    setIsLightMode(!isLightMode);
+    document.body.classList.toggle('light-theme');
+  };
 
   // Fetch initial API state
   useEffect(() => {
@@ -141,12 +153,8 @@ export default function App() {
     setResultSubTab('overview');
     setActivePipelineStep(0);
 
-    // Animate through pipeline stages
     const stepInterval = setInterval(() => {
-      setActivePipelineStep((prev) => {
-        if (prev < pipelineStages.length - 1) return prev + 1;
-        return prev;
-      });
+      setActivePipelineStep((prev) => (prev < pipelineStages.length - 1 ? prev + 1 : prev));
     }, 180);
 
     try {
@@ -162,11 +170,7 @@ export default function App() {
           clearInterval(stepInterval);
           setScanResult(data);
           setLoading(false);
-          // Trigger confetti if legitimate safe site
-          if (data.is_phishing === 0) {
-            triggerConfetti();
-          }
-          // Refresh scan history
+          if (data.is_phishing === 0) triggerConfetti();
           fetch('/api/history').then(r => r.json()).then(d => d.history && setHistoryList(d.history));
         }, 1100);
       } else {
@@ -175,89 +179,13 @@ export default function App() {
     } catch (err) {
       setTimeout(() => {
         clearInterval(stepInterval);
-        // Fallback simulator matching poster demo
         const clean = urlToScan.toLowerCase();
         let fallbackData;
         if (clean.includes('bankofamerica') || clean.includes('google') || clean.includes('apple')) {
-          fallbackData = {
-            url: urlToScan.startsWith('http') ? urlToScan : `https://${urlToScan}`,
-            is_phishing: 0,
-            verdict_badge: 'Safe',
-            verdict_title: 'Legitimate Website',
-            confidence: 96.8,
-            key_details: {
-              url_length_display: '29 characters',
-              domain_age_display: '15 years',
-              ssl_certificate_display: 'Valid',
-              mail_server_display: 'Not Present',
-              domain: 'bankofamerica.com',
-              protocol: 'HTTPS'
-            },
-            model_votes: {
-              xgboost: { model_name: 'XGBoost (Primary)', verdict: 'Safe', confidence: 96.8, deployed: true },
-              random_forest: { model_name: 'Random Forest (Baseline)', verdict: 'Safe', confidence: 95.1, deployed: false }
-            },
-            threat_indicators: [
-              "Domain is well-established (15 years) with high operational trust.",
-              "Valid SSL/TLS certificate authenticated by a trusted CA.",
-              "Lexical structure matches verified authentic banking platform."
-            ],
-            breakdown: {
-              structural: [
-                { name: "URL Length", value: "29 chars", status: "Normal" },
-                { name: "IP Address Host", value: "None", status: "Safe" },
-                { name: "Subdomain Count", value: "1", status: "Normal" }
-              ],
-              domain_ssl: [
-                { name: "Domain Age", value: "15 years", status: "Established Trust" },
-                { name: "SSL Certificate", value: "Valid", status: "Valid" }
-              ],
-              content_protocol: [
-                { name: "Mail Server (MX)", value: "Not Present", status: "Not Configured" },
-                { name: "Suspicious Keywords", value: "None", status: "Clean" }
-              ]
-            }
-          };
+          fallbackData = generateLegitSample(urlToScan);
           triggerConfetti();
         } else {
-          fallbackData = {
-            url: urlToScan.startsWith('http') ? urlToScan : `http://${urlToScan}`,
-            is_phishing: 1,
-            verdict_badge: 'Malicious',
-            verdict_title: 'Phishing Website Detected!',
-            confidence: 92.4,
-            key_details: {
-              url_length_display: '42 characters',
-              domain_age_display: '5 days',
-              ssl_certificate_display: 'Invalid',
-              mail_server_display: 'Present',
-              domain: 'secure-login-update.com',
-              protocol: 'HTTP'
-            },
-            model_votes: {
-              xgboost: { model_name: 'XGBoost (Primary)', verdict: 'Malicious', confidence: 92.4, deployed: true },
-              random_forest: { model_name: 'Random Forest (Baseline)', verdict: 'Malicious', confidence: 90.2, deployed: false }
-            },
-            threat_indicators: [
-              "Newly registered domain (5 days) strongly correlates with disposable phishing traps.",
-              "Missing or invalid SSL/TLS certificate prevents encrypted communications.",
-              "Suspicious auth keywords ('login', 'update') flagged by behavioral classifier."
-            ],
-            breakdown: {
-              structural: [
-                { name: "URL Length", value: "42 chars", status: "Suspicious" },
-                { name: "Prefix/Suffix Hyphen", value: "Present (-)", status: "Impersonation Risk" }
-              ],
-              domain_ssl: [
-                { name: "Domain Age", value: "5 days", status: "High Risk (Zero-Day)" },
-                { name: "SSL Certificate", value: "Invalid", status: "Invalid / Missing" }
-              ],
-              content_protocol: [
-                { name: "Mail Server (MX)", value: "Present", status: "Active" },
-                { name: "Suspicious Keywords", value: "Triggered ('login')", status: "Flagged" }
-              ]
-            }
-          };
+          fallbackData = generatePhishSample(urlToScan);
         }
         setScanResult(fallbackData);
         setLoading(false);
@@ -267,12 +195,91 @@ export default function App() {
 
   const triggerConfetti = () => {
     confetti({
-      particleCount: 80,
-      spread: 70,
+      particleCount: 90,
+      spread: 75,
       origin: { y: 0.6 },
-      colors: ['#10b981', '#3b82f6', '#60a5fa']
+      colors: ['#10b981', '#06b6d4', '#3b82f6']
     });
   };
+
+  const generateLegitSample = (url = 'https://www.bankofamerica.com') => ({
+    url: url.startsWith('http') ? url : `https://${url}`,
+    is_phishing: 0,
+    verdict_badge: 'Safe',
+    verdict_title: 'Legitimate Website',
+    confidence: 96.8,
+    key_details: {
+      url_length_display: '29 characters',
+      domain_age_display: '15 years',
+      ssl_certificate_display: 'Valid',
+      mail_server_display: 'Not Present',
+      domain: 'bankofamerica.com',
+      protocol: 'HTTPS'
+    },
+    model_votes: {
+      xgboost: { model_name: 'XGBoost (Primary)', verdict: 'Safe', confidence: 96.8, deployed: true },
+      random_forest: { model_name: 'Random Forest (Baseline)', verdict: 'Safe', confidence: 95.1, deployed: false }
+    },
+    threat_indicators: [
+      "Domain is well-established (15 years) with high operational trust.",
+      "Valid SSL/TLS certificate authenticated by a trusted CA.",
+      "Lexical structure matches verified authentic banking platform."
+    ],
+    breakdown: {
+      structural: [
+        { name: "URL Length", value: "29 chars", status: "Normal" },
+        { name: "IP Address Host", value: "None", status: "Safe" },
+        { name: "Subdomain Count", value: "1", status: "Normal" }
+      ],
+      domain_ssl: [
+        { name: "Domain Age", value: "15 years", status: "Established Trust" },
+        { name: "SSL Certificate", value: "Valid", status: "Valid" }
+      ],
+      content_protocol: [
+        { name: "Mail Server (MX)", value: "Not Present", status: "Not Configured" },
+        { name: "Suspicious Keywords", value: "None", status: "Clean" }
+      ]
+    }
+  });
+
+  const generatePhishSample = (url = 'http://secure-login-update.com') => ({
+    url: url.startsWith('http') ? url : `http://${url}`,
+    is_phishing: 1,
+    verdict_badge: 'Malicious',
+    verdict_title: 'Phishing Website Detected!',
+    confidence: 92.4,
+    key_details: {
+      url_length_display: '42 characters',
+      domain_age_display: '5 days',
+      ssl_certificate_display: 'Invalid',
+      mail_server_display: 'Present',
+      domain: 'secure-login-update.com',
+      protocol: 'HTTP'
+    },
+    model_votes: {
+      xgboost: { model_name: 'XGBoost (Primary)', verdict: 'Malicious', confidence: 92.4, deployed: true },
+      random_forest: { model_name: 'Random Forest (Baseline)', verdict: 'Malicious', confidence: 90.2, deployed: false }
+    },
+    threat_indicators: [
+      "Newly registered domain (5 days) strongly correlates with disposable phishing traps.",
+      "Missing or invalid SSL/TLS certificate prevents encrypted communications.",
+      "Suspicious auth keywords ('login', 'update') flagged by behavioral classifier."
+    ],
+    breakdown: {
+      structural: [
+        { name: "URL Length", value: "42 chars", status: "Suspicious" },
+        { name: "Prefix/Suffix Hyphen", value: "Present (-)", status: "Impersonation Risk" }
+      ],
+      domain_ssl: [
+        { name: "Domain Age", value: "5 days", status: "High Risk (Zero-Day)" },
+        { name: "SSL Certificate", value: "Invalid", status: "Invalid / Missing" }
+      ],
+      content_protocol: [
+        { name: "Mail Server (MX)", value: "Present", status: "Active" },
+        { name: "Suspicious Keywords", value: "Triggered ('login')", status: "Flagged" }
+      ]
+    }
+  });
 
   const loadSample = (sampleUrl) => {
     setUrlInput(sampleUrl);
@@ -285,29 +292,24 @@ export default function App() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Interactive Permutation Importance Simulation calculation
+  // Interactive Permutation Importance calculation
   const calculateSimulatedRisk = () => {
     let score = 50;
-    // Domain age: weight ~0.22
     if (simDomainAge < 0.5) score += 32;
     else if (simDomainAge < 2) score += 15;
     else score -= 25;
 
-    // SSL: weight ~0.18
     if (!simSslValid) score += 26;
     else score -= 20;
 
-    // Mail server: weight ~0.12
     if (simMxPresent) score += 10;
     else score -= 5;
 
-    // Keywords: weight ~0.09
     if (simKeywords) score += 18;
 
     return Math.min(Math.max(score, 5), 98);
   };
 
-  // Interactive Anti-Phishing Score (APS) calculation
   const computeAps = (tpr, fpr) => {
     const tprDec = tpr / 100.0;
     const fprDec = fpr / 100.0;
@@ -338,6 +340,13 @@ export default function App() {
             <div className="banner-slogan">
               Safer Browsing.<br />Stronger Security.
             </div>
+            <button
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              title={isLightMode ? 'Switch to Dark Cyber Mode' : 'Switch to Clean Light Mode'}
+            >
+              {isLightMode ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
           </div>
         </div>
       </header>
@@ -348,34 +357,57 @@ export default function App() {
           <ul className="nav-tabs">
             <li>
               <button
-                className={`nav-btn ${activeTab === 'home' ? 'active' : ''}`}
+                className={`nav-btn ${activeTab === 'home' && !scanResult ? 'active' : ''}`}
                 onClick={() => { setActiveTab('home'); setScanResult(null); }}
               >
-                <Search size={16} /> Home / Scanner
+                <Search size={15} /> 1. Home / Scanner
+              </button>
+            </li>
+            <li>
+              <button
+                className={`nav-btn ${activeTab === 'phish_demo' || (scanResult?.is_phishing === 1) ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('home');
+                  setScanResult(generatePhishSample());
+                }}
+              >
+                <AlertTriangle size={15} color="#ef4444" /> 2. Phishing Result Demo
+              </button>
+            </li>
+            <li>
+              <button
+                className={`nav-btn ${activeTab === 'legit_demo' || (scanResult && scanResult?.is_phishing === 0) ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('home');
+                  setScanResult(generateLegitSample());
+                  triggerConfetti();
+                }}
+              >
+                <CheckCircle2 size={15} color="#10b981" /> 3. Legitimate Result Demo
               </button>
             </li>
             <li>
               <button
                 className={`nav-btn ${activeTab === 'features' ? 'active' : ''}`}
-                onClick={() => setActiveTab('features')}
+                onClick={() => { setActiveTab('features'); setScanResult(null); }}
               >
-                <BarChart3 size={16} /> Feature Analysis
+                <BarChart3 size={15} /> 4. Feature Analysis
               </button>
             </li>
             <li>
               <button
                 className={`nav-btn ${activeTab === 'performance' ? 'active' : ''}`}
-                onClick={() => setActiveTab('performance')}
+                onClick={() => { setActiveTab('performance'); setScanResult(null); }}
               >
-                <Activity size={16} /> Model Performance
+                <Activity size={15} /> 5. Model Performance
               </button>
             </li>
             <li>
               <button
                 className={`nav-btn ${activeTab === 'about' ? 'active' : ''}`}
-                onClick={() => setActiveTab('about')}
+                onClick={() => { setActiveTab('about'); setScanResult(null); }}
               >
-                <Info size={16} /> About Phidexion
+                <Info size={15} /> 6. About
               </button>
             </li>
           </ul>
@@ -383,7 +415,7 @@ export default function App() {
           <div className="nav-status-group">
             <div className="system-status-indicator">
               <div className="pulse-dot"></div>
-              <span>AI Engine Online</span>
+              <span>AI Core Online</span>
             </div>
 
             <div className="active-model-pill">
@@ -396,7 +428,7 @@ export default function App() {
               onClick={() => setShowHistory(true)}
               title="View Scan History"
             >
-              <History size={14} /> History ({historyList.length})
+              <History size={14} /> Logs ({historyList.length})
             </button>
           </div>
         </div>
@@ -404,458 +436,465 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="main-content">
-        {/* ================= SCREEN 1 / SCREEN 2 / SCREEN 3: SCANNER & RESULTS ================= */}
-        {activeTab === 'home' && (
-          <div>
-            {!scanResult ? (
-              /* SCREEN 1: Home / URL Scanner */
-              <div className="white-card">
-                <div className="hero-box">
-                  <h2 className="hero-main-title">Phidexion</h2>
-                  <div className="hero-tag">AI-Based Phishing Website Detection</div>
-                  <p className="hero-subtext">
-                    Protect yourself from phishing attacks. Enter a URL below to check if the website is safe or malicious using advanced machine learning and feature selection.
-                  </p>
-                </div>
-
-                {/* Search Form */}
-                <form
-                  className="search-form"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleScan();
-                  }}
-                >
-                  <div className="input-container">
-                    <input
-                      type="text"
-                      className="url-input"
-                      placeholder="Enter website URL (e.g., https://example.com)"
-                      value={urlInput}
-                      onChange={(e) => setUrlInput(e.target.value)}
-                    />
-                    <button type="submit" className="scan-submit-btn" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <RefreshCw size={17} style={{ animation: 'spin 1s linear infinite' }} /> Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <Search size={17} /> Check URL
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-
-                {/* Sample Test Pills */}
-                <div className="samples-row">
-                  <span className="sample-tag">Client Quick Demos:</span>
-                  <button
-                    className="sample-chip chip-legit"
-                    onClick={() => loadSample('https://www.bankofamerica.com')}
-                  >
-                    ✓ Bank of America (Legitimate)
-                  </button>
-                  <button
-                    className="sample-chip chip-phish"
-                    onClick={() => loadSample('http://secure-login-update.com')}
-                  >
-                    ⚠ secure-login-update.com (Phishing)
-                  </button>
-                  <button
-                    className="sample-chip"
-                    onClick={() => loadSample('https://www.google.com')}
-                  >
-                    Google
-                  </button>
-                </div>
-
-                {/* Animated Pipeline Stage Progression during scan */}
-                {loading && (
-                  <div className="scan-pipeline-container">
-                    <div className="pipeline-header">
-                      <span className="pipeline-title">
-                        <Activity size={16} /> Real-Time Cyber Inspection Pipeline
-                      </span>
-                      <span style={{ fontSize: '12px', color: '#2563eb', fontWeight: 700 }}>
-                        Step {activePipelineStep + 1} of {pipelineStages.length}
-                      </span>
-                    </div>
-
-                    {pipelineStages.map((stage, idx) => (
-                      <div
-                        key={idx}
-                        className={`pipeline-step-item ${
-                          idx === activePipelineStep
-                            ? 'active'
-                            : idx < activePipelineStep
-                            ? 'done'
-                            : ''
-                        }`}
-                      >
-                        <div
-                          className={`step-indicator ${
-                            idx === activePipelineStep
-                              ? 'active'
-                              : idx < activePipelineStep
-                              ? 'done'
-                              : 'pending'
-                          }`}
-                        >
-                          {idx < activePipelineStep ? '✓' : idx + 1}
-                        </div>
-                        <span>{stage}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* 4 Security Feature Cards (Screen 1) */}
-                <div className="cards-grid">
-                  <div className="feature-box">
-                    <div className="feature-box-icon">
-                      <Shield size={24} />
-                    </div>
-                    <div className="feature-box-title">AI Powered Detection</div>
-                    <div className="feature-box-sub">
-                      Combines heuristic analysis with learned behavioral patterns.
-                    </div>
-                  </div>
-
-                  <div className="feature-box">
-                    <div className="feature-box-icon">
-                      <Cpu size={24} />
-                    </div>
-                    <div className="feature-box-title">Machine Learning (RF &amp; XGBoost)</div>
-                    <div className="feature-box-sub">
-                      Dual ensemble classifiers for maximum detection precision.
-                    </div>
-                  </div>
-
-                  <div className="feature-box">
-                    <div className="feature-box-icon">
-                      <Zap size={24} />
-                    </div>
-                    <div className="feature-box-title">Real-time Analysis</div>
-                    <div className="feature-box-sub">
-                      Sub-second extraction across structural and domain features.
-                    </div>
-                  </div>
-
-                  <div className="feature-box">
-                    <div className="feature-box-icon">
-                      <Lock size={24} />
-                    </div>
-                    <div className="feature-box-title">Protects Your Data &amp; Identity</div>
-                    <div className="feature-box-sub">
-                      Shields credentials against zero-day phishing spoofs.
-                    </div>
-                  </div>
-                </div>
+        {/* ================= SCREEN 1: URL SCANNER / HOME ================= */}
+        {activeTab === 'home' && !scanResult && (
+          <div className="cyber-card">
+            <div className="hero-box">
+              <div className="cyber-chip-badge">
+                <Sparkles size={14} /> NEXT-GEN ZERO-DAY DEFENSE ENGINE
               </div>
-            ) : (
-              /* SCREEN 2 & SCREEN 3: RESULT DASHBOARD (DYNAMIC & CLIENT-READY) */
-              <div className="white-card result-container">
-                {scanResult.is_phishing === 1 ? (
-                  <div className="result-glow-bg-danger"></div>
-                ) : (
-                  <div className="result-glow-bg-safe"></div>
-                )}
+              <h2 className="hero-main-title">Phidexion</h2>
+              <div className="hero-tag">AI-Based Phishing Website Detection</div>
+              <p className="hero-subtext">
+                Protect yourself from phishing attacks. Enter a URL below to check if the website is safe or malicious using advanced machine learning and permutation feature selection.
+              </p>
+            </div>
 
-                {/* Header Icon */}
-                <div className="result-badge-wrap">
-                  {scanResult.is_phishing === 1 ? (
-                    <AlertTriangle size={58} color="#dc2626" />
+            {/* Search Form */}
+            <form
+              className="search-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleScan();
+              }}
+            >
+              <div className="input-container">
+                <input
+                  type="text"
+                  className="url-input"
+                  placeholder="Enter website URL (e.g., https://example.com)"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                />
+                <button type="submit" className="scan-submit-btn" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <RefreshCw size={17} style={{ animation: 'spin 1s linear infinite' }} /> Analyzing...
+                    </>
                   ) : (
-                    <CheckCircle2 size={58} color="#16a34a" />
+                    <>
+                      <Search size={17} /> Check URL
+                    </>
                   )}
-                </div>
+                </button>
+              </div>
+            </form>
 
-                {/* Verdict Title */}
-                <h2 className={scanResult.is_phishing === 1 ? 'title-danger' : 'title-safe'}>
-                  {scanResult.verdict_title}
-                </h2>
+            {/* Sample Test Pills */}
+            <div className="samples-row">
+              <span className="sample-tag">Client Demonstrations:</span>
+              <button
+                className="sample-chip chip-legit"
+                onClick={() => loadSample('https://www.bankofamerica.com')}
+              >
+                ✓ Bank of America (Legitimate Safe)
+              </button>
+              <button
+                className="sample-chip chip-phish"
+                onClick={() => loadSample('http://secure-login-update.com')}
+              >
+                ⚠ secure-login-update.com (Phishing Trap)
+              </button>
+              <button
+                className="sample-chip"
+                onClick={() => loadSample('https://www.google.com')}
+              >
+                Google Search
+              </button>
+            </div>
 
-                {/* URL Code preview */}
-                <div>
-                  <div className="url-preview-pill">{scanResult.url}</div>
-                </div>
-
-                {/* Status Badge */}
-                <div>
-                  <span
-                    className={`verdict-pill ${
-                      scanResult.is_phishing === 1 ? 'pill-danger' : 'pill-safe'
-                    }`}
-                  >
-                    {scanResult.verdict_badge}
+            {/* Animated Pipeline Stage Progression */}
+            {loading && (
+              <div className="scan-pipeline-container">
+                <div className="pipeline-header">
+                  <span className="pipeline-title">
+                    <Activity size={16} /> Real-Time Cyber Inspection Pipeline
+                  </span>
+                  <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 800 }}>
+                    Stage {activePipelineStep + 1} of {pipelineStages.length}
                   </span>
                 </div>
 
-                {/* Result Sub-Navigation Tabs */}
-                <div className="result-subnav">
-                  <button
-                    className={`subnav-btn ${resultSubTab === 'overview' ? 'active' : ''}`}
-                    onClick={() => setResultSubTab('overview')}
+                {pipelineStages.map((stage, idx) => (
+                  <div
+                    key={idx}
+                    className={`pipeline-step-item ${
+                      idx === activePipelineStep
+                        ? 'active'
+                        : idx < activePipelineStep
+                        ? 'done'
+                        : ''
+                    }`}
                   >
-                    <Activity size={14} /> Screen View
-                  </button>
-                  <button
-                    className={`subnav-btn ${resultSubTab === 'deep' ? 'active' : ''}`}
-                    onClick={() => setResultSubTab('deep')}
-                  >
-                    <Layers size={14} /> Feature Breakdown
-                  </button>
-                  <button
-                    className={`subnav-btn ${resultSubTab === 'models' ? 'active' : ''}`}
-                    onClick={() => setResultSubTab('models')}
-                  >
-                    <Cpu size={14} /> Model Voting
-                  </button>
-                  <button
-                    className={`subnav-btn ${resultSubTab === 'export' ? 'active' : ''}`}
-                    onClick={() => setResultSubTab('export')}
-                  >
-                    <FileText size={14} /> Threat Intelligence
-                  </button>
+                    <div
+                      className={`step-indicator ${
+                        idx === activePipelineStep
+                          ? 'active'
+                          : idx < activePipelineStep
+                          ? 'done'
+                          : 'pending'
+                      }`}
+                    >
+                      {idx < activePipelineStep ? '✓' : idx + 1}
+                    </div>
+                    <span>{stage}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 4 Security Feature Cards (Screen 1) */}
+            <div className="cards-grid">
+              <div className="feature-box">
+                <div className="feature-box-icon">
+                  <Shield size={24} />
+                </div>
+                <div className="feature-box-title">AI Powered Detection</div>
+                <div className="feature-box-sub">
+                  Combines heuristic analysis with learned behavioral patterns against unseen attacks.
+                </div>
+                <span className="feature-box-metric">Zero-Day Defense</span>
+              </div>
+
+              <div className="feature-box">
+                <div className="feature-box-icon">
+                  <Cpu size={24} />
+                </div>
+                <div className="feature-box-title">Machine Learning (RF &amp; XGBoost)</div>
+                <div className="feature-box-sub">
+                  Ensemble gradient boosted trees trained on 6,000+ benchmark URLs.
+                </div>
+                <span className="feature-box-metric">97.8% Accuracy</span>
+              </div>
+
+              <div className="feature-box">
+                <div className="feature-box-icon">
+                  <Zap size={24} />
+                </div>
+                <div className="feature-box-title">Real-time Analysis</div>
+                <div className="feature-box-sub">
+                  Sub-second feature extraction across structural, DNS, and TLS certificates.
+                </div>
+                <span className="feature-box-metric">&lt; 250ms Latency</span>
+              </div>
+
+              <div className="feature-box">
+                <div className="feature-box-icon">
+                  <Lock size={24} />
+                </div>
+                <div className="feature-box-title">Protects Your Data &amp; Identity</div>
+                <div className="feature-box-sub">
+                  Proactively shields banking credentials and sensitive logins from theft.
+                </div>
+                <span className="feature-box-metric">Credential Guard</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= SCREEN 2 / SCREEN 3: DETECTION RESULTS ================= */}
+        {activeTab === 'home' && scanResult && (
+          <div className="cyber-card result-container">
+            {scanResult.is_phishing === 1 ? (
+              <div className="result-glow-bg-danger"></div>
+            ) : (
+              <div className="result-glow-bg-safe"></div>
+            )}
+
+            {/* Header Icon */}
+            <div className="result-icon-lg">
+              {scanResult.is_phishing === 1 ? (
+                <AlertTriangle size={62} color="#ef4444" />
+              ) : (
+                <CheckCircle2 size={62} color="#10b981" />
+              )}
+            </div>
+
+            {/* Verdict Title */}
+            <h2 className={scanResult.is_phishing === 1 ? 'title-danger' : 'title-safe'}>
+              {scanResult.verdict_title}
+            </h2>
+
+            {/* Analyzed URL preview */}
+            <div>
+              <div className="url-preview-pill">{scanResult.url}</div>
+            </div>
+
+            {/* Status Pill Badge */}
+            <div>
+              <span
+                className={`verdict-pill ${
+                  scanResult.is_phishing === 1 ? 'pill-danger' : 'pill-safe'
+                }`}
+              >
+                {scanResult.verdict_badge}
+              </span>
+            </div>
+
+            {/* Result Sub-Navigation Tabs */}
+            <div className="result-subnav">
+              <button
+                className={`subnav-btn ${resultSubTab === 'overview' ? 'active' : ''}`}
+                onClick={() => setResultSubTab('overview')}
+              >
+                <Activity size={14} /> Screen View
+              </button>
+              <button
+                className={`subnav-btn ${resultSubTab === 'deep' ? 'active' : ''}`}
+                onClick={() => setResultSubTab('deep')}
+              >
+                <Layers size={14} /> Feature Breakdown
+              </button>
+              <button
+                className={`subnav-btn ${resultSubTab === 'models' ? 'active' : ''}`}
+                onClick={() => setResultSubTab('models')}
+              >
+                <Cpu size={14} /> Model Voting
+              </button>
+              <button
+                className={`subnav-btn ${resultSubTab === 'export' ? 'active' : ''}`}
+                onClick={() => setResultSubTab('export')}
+              >
+                <FileText size={14} /> Threat Intelligence
+              </button>
+            </div>
+
+            {/* --- SUBTAB 1: POSTER SCREEN VIEW (SCREEN 2 / SCREEN 3) --- */}
+            {resultSubTab === 'overview' && (
+              <div>
+                {/* Confidence Bar */}
+                <div className="conf-block">
+                  <div className="conf-meta">
+                    <span>Confidence Score:</span>
+                    <span
+                      style={{
+                        color: scanResult.is_phishing === 1 ? '#ef4444' : '#10b981',
+                        fontWeight: 900,
+                        fontSize: '18px'
+                      }}
+                    >
+                      {scanResult.confidence}%
+                    </span>
+                  </div>
+                  <div className="conf-track">
+                    <div
+                      className={`conf-bar ${
+                        scanResult.is_phishing === 1 ? 'bar-red' : 'bar-green'
+                      }`}
+                      style={{ width: `${scanResult.confidence}%` }}
+                    ></div>
+                  </div>
                 </div>
 
-                {/* --- SUBTAB 1: POSTER SCREEN OVERVIEW (SCREEN 2 / SCREEN 3) --- */}
-                {resultSubTab === 'overview' && (
-                  <div>
-                    {/* Confidence Gauge */}
-                    <div className="conf-block">
-                      <div className="conf-meta">
-                        <span>Confidence Score:</span>
-                        <span
-                          style={{
-                            color: scanResult.is_phishing === 1 ? '#dc2626' : '#16a34a',
-                            fontWeight: 800
-                          }}
-                        >
-                          {scanResult.confidence}%
-                        </span>
-                      </div>
-                      <div className="conf-track">
-                        <div
-                          className={`conf-bar ${
-                            scanResult.is_phishing === 1 ? 'bar-red' : 'bar-green'
-                          }`}
-                          style={{ width: `${scanResult.confidence}%` }}
-                        ></div>
-                      </div>
-                    </div>
+                {/* Key Details Table (2x2 Grid from Poster) */}
+                <div className="details-table-card">
+                  <div className="details-table-header">Key Details</div>
+                  <div className="detail-line">
+                    <span className="detail-line-title">URL Length</span>
+                    <span className="detail-line-val">
+                      {scanResult.key_details.url_length_display}
+                    </span>
+                  </div>
+                  <div className="detail-line">
+                    <span className="detail-line-title">Domain Age</span>
+                    <span
+                      className="detail-line-val"
+                      style={{
+                        color: scanResult.is_phishing === 1 ? '#ef4444' : '#10b981'
+                      }}
+                    >
+                      {scanResult.key_details.domain_age_display}
+                    </span>
+                  </div>
+                  <div className="detail-line">
+                    <span className="detail-line-title">SSL Certificate</span>
+                    <span
+                      className="detail-line-val"
+                      style={{
+                        color: scanResult.is_phishing === 1 ? '#ef4444' : '#10b981'
+                      }}
+                    >
+                      {scanResult.key_details.ssl_certificate_display}
+                    </span>
+                  </div>
+                  <div className="detail-line">
+                    <span className="detail-line-title">Mail Server</span>
+                    <span className="detail-line-val">
+                      {scanResult.key_details.mail_server_display}
+                    </span>
+                  </div>
+                </div>
 
-                    {/* Key Details Table (2x2 Grid from Poster) */}
-                    <div className="details-table-card">
-                      <div className="details-table-header">Key Details</div>
-                      <div className="detail-line">
-                        <span className="detail-line-title">URL Length</span>
-                        <span className="detail-line-val">
-                          {scanResult.key_details.url_length_display}
-                        </span>
-                      </div>
-                      <div className="detail-line">
-                        <span className="detail-line-title">Domain Age</span>
-                        <span className="detail-line-val">
-                          {scanResult.key_details.domain_age_display}
-                        </span>
-                      </div>
-                      <div className="detail-line">
-                        <span className="detail-line-title">SSL Certificate</span>
-                        <span
-                          className="detail-line-val"
-                          style={{
-                            color: scanResult.is_phishing === 1 ? '#dc2626' : '#16a34a'
-                          }}
-                        >
-                          {scanResult.key_details.ssl_certificate_display}
-                        </span>
-                      </div>
-                      <div className="detail-line">
-                        <span className="detail-line-title">Mail Server</span>
-                        <span className="detail-line-val">
-                          {scanResult.key_details.mail_server_display}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Advisory Callout */}
-                    {scanResult.is_phishing === 1 ? (
-                      <div className="notice-card notice-danger">
-                        <AlertTriangle size={20} style={{ flexShrink: 0 }} />
-                        <span>
-                          This website may be trying to steal your personal information. Do not enter any sensitive data.
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="notice-card notice-safe">
-                        <CheckCircle2 size={20} style={{ flexShrink: 0 }} />
-                        <span>This website appears to be legitimate and safe.</span>
-                      </div>
-                    )}
+                {/* Advisory Notice Banner */}
+                {scanResult.is_phishing === 1 ? (
+                  <div className="notice-card notice-danger">
+                    <AlertTriangle size={22} style={{ flexShrink: 0 }} />
+                    <span>
+                      This website may be trying to steal your personal information. Do not enter any sensitive data.
+                    </span>
+                  </div>
+                ) : (
+                  <div className="notice-card notice-safe">
+                    <CheckCircle2 size={22} style={{ flexShrink: 0 }} />
+                    <span>This website appears to be legitimate and safe.</span>
                   </div>
                 )}
+              </div>
+            )}
 
-                {/* --- SUBTAB 2: MULTI-TIER FEATURE BREAKDOWN --- */}
-                {resultSubTab === 'deep' && (
-                  <div className="deep-tier-grid">
-                    <div className="tier-card">
-                      <div className="tier-header">
-                        <Search size={15} /> 1. Structural / Lexical
-                      </div>
-                      {scanResult.breakdown?.structural?.map((item, i) => (
-                        <div key={i} className="tier-row">
-                          <span style={{ color: '#475569' }}>{item.name}</span>
-                          <span className="tier-badge badge-risk-safe">{item.value}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="tier-card">
-                      <div className="tier-header">
-                        <Shield size={15} /> 2. Domain &amp; SSL/TLS
-                      </div>
-                      {scanResult.breakdown?.domain_ssl?.map((item, i) => (
-                        <div key={i} className="tier-row">
-                          <span style={{ color: '#475569' }}>{item.name}</span>
-                          <span
-                            className={`tier-badge ${
-                              item.status.includes('High') || item.status.includes('Invalid')
-                                ? 'badge-risk-critical'
-                                : 'badge-risk-safe'
-                            }`}
-                          >
-                            {item.value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="tier-card">
-                      <div className="tier-header">
-                        <Server size={15} /> 3. Content &amp; Protocol
-                      </div>
-                      {scanResult.breakdown?.content_protocol?.map((item, i) => (
-                        <div key={i} className="tier-row">
-                          <span style={{ color: '#475569' }}>{item.name}</span>
-                          <span
-                            className={`tier-badge ${
-                              item.status.includes('Flagged') || item.status.includes('Active')
-                                ? 'badge-risk-warning'
-                                : 'badge-risk-safe'
-                            }`}
-                          >
-                            {item.value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+            {/* --- SUBTAB 2: MULTI-TIER FEATURE BREAKDOWN --- */}
+            {resultSubTab === 'deep' && (
+              <div className="deep-tier-grid">
+                <div className="tier-card">
+                  <div className="tier-header">
+                    <Search size={16} /> 1. Structural / Lexical Features
                   </div>
-                )}
-
-                {/* --- SUBTAB 3: DUAL ENSEMBLE MODEL VOTING --- */}
-                {resultSubTab === 'models' && (
-                  <div>
-                    <div className="dual-vote-grid">
-                      <div className="vote-card primary">
-                        <div className="vote-model-title">
-                          <Cpu size={16} style={{ display: 'inline', marginRight: '6px' }} />
-                          {scanResult.model_votes?.xgboost?.model_name}
-                        </div>
-                        <span style={{ fontSize: '12px', color: '#2563eb', fontWeight: 700 }}>
-                          ✓ Best Model (Production Deployed)
-                        </span>
-                        <div
-                          className="vote-prob"
-                          style={{
-                            color: scanResult.is_phishing === 1 ? '#dc2626' : '#16a34a'
-                          }}
-                        >
-                          {scanResult.model_votes?.xgboost?.confidence}%
-                        </div>
-                        <p style={{ fontSize: '12.5px', color: '#475569' }}>
-                          Gradient boosted decision trees optimized on permutation-selected features.
-                        </p>
-                      </div>
-
-                      <div className="vote-card">
-                        <div className="vote-model-title">
-                          <Layers size={16} style={{ display: 'inline', marginRight: '6px' }} />
-                          {scanResult.model_votes?.random_forest?.model_name}
-                        </div>
-                        <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
-                          Cross-validation Baseline
-                        </span>
-                        <div
-                          className="vote-prob"
-                          style={{
-                            color: scanResult.is_phishing === 1 ? '#dc2626' : '#16a34a'
-                          }}
-                        >
-                          {scanResult.model_votes?.random_forest?.confidence}%
-                        </div>
-                        <p style={{ fontSize: '12.5px', color: '#475569' }}>
-                          Bagged decision tree ensemble providing consensus agreement.
-                        </p>
-                      </div>
+                  {scanResult.breakdown?.structural?.map((item, i) => (
+                    <div key={i} className="tier-row">
+                      <span>{item.name}</span>
+                      <span className="tier-badge badge-risk-safe">{item.value}</span>
                     </div>
+                  ))}
+                </div>
+
+                <div className="tier-card">
+                  <div className="tier-header">
+                    <Shield size={16} /> 2. Domain &amp; SSL/TLS Features
                   </div>
-                )}
-
-                {/* --- SUBTAB 4: THREAT INTELLIGENCE & EXPORT --- */}
-                {resultSubTab === 'export' && (
-                  <div style={{ textAlign: 'left', maxWidth: '640px', margin: '0 auto' }}>
-                    <div className="info-callout" style={{ marginTop: '10px' }}>
-                      <h3>
-                        <ShieldAlert size={17} /> Security Analysis Summary
-                      </h3>
-                      <ul style={{ paddingLeft: '20px', fontSize: '13px', color: '#334155' }}>
-                        {scanResult.threat_indicators?.map((item, idx) => (
-                          <li key={idx} style={{ marginBottom: '6px' }}>{item}</li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                      <button
-                        className="btn-scan-again"
-                        onClick={() => copyToClipboard(JSON.stringify(scanResult, null, 2))}
+                  {scanResult.breakdown?.domain_ssl?.map((item, i) => (
+                    <div key={i} className="tier-row">
+                      <span>{item.name}</span>
+                      <span
+                        className={`tier-badge ${
+                          item.status.includes('High') || item.status.includes('Invalid')
+                            ? 'badge-risk-critical'
+                            : 'badge-risk-safe'
+                        }`}
                       >
-                        {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied JSON!' : 'Copy Client Report JSON'}
-                      </button>
+                        {item.value}
+                      </span>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
 
-                {/* Action Buttons */}
-                <div className="result-button-row">
-                  <button
-                    className="btn-scan-again"
-                    onClick={() => {
-                      setScanResult(null);
-                      setUrlInput('');
+                <div className="tier-card">
+                  <div className="tier-header">
+                    <Server size={16} /> 3. Content &amp; Protocol Features
+                  </div>
+                  {scanResult.breakdown?.content_protocol?.map((item, i) => (
+                    <div key={i} className="tier-row">
+                      <span>{item.name}</span>
+                      <span
+                        className={`tier-badge ${
+                          item.status.includes('Flagged') || item.status.includes('Active')
+                            ? 'badge-risk-warning'
+                            : 'badge-risk-safe'
+                        }`}
+                      >
+                        {item.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* --- SUBTAB 3: DUAL ENSEMBLE MODEL VOTING --- */}
+            {resultSubTab === 'models' && (
+              <div className="dual-vote-grid">
+                <div className="vote-card primary">
+                  <div className="vote-model-title">
+                    <Cpu size={17} style={{ display: 'inline', marginRight: '6px' }} />
+                    {scanResult.model_votes?.xgboost?.model_name}
+                  </div>
+                  <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 800 }}>
+                    ✓ Production Deployed (97.8% Accuracy)
+                  </span>
+                  <div
+                    className="vote-prob"
+                    style={{
+                      color: scanResult.is_phishing === 1 ? '#ef4444' : '#10b981'
                     }}
                   >
-                    <RefreshCw size={15} /> Check Another URL
-                  </button>
-                  <button
-                    className="btn-scan-again"
-                    style={{ background: '#2563eb', color: '#fff' }}
-                    onClick={() => setActiveTab('features')}
+                    {scanResult.model_votes?.xgboost?.confidence}%
+                  </div>
+                  <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                    Gradient boosted decision trees optimized on permutation-selected features.
+                  </p>
+                </div>
+
+                <div className="vote-card">
+                  <div className="vote-model-title">
+                    <Layers size={17} style={{ display: 'inline', marginRight: '6px' }} />
+                    {scanResult.model_votes?.random_forest?.model_name}
+                  </div>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700 }}>
+                    Bagged Tree Consensus (96.2% Accuracy)
+                  </span>
+                  <div
+                    className="vote-prob"
+                    style={{
+                      color: scanResult.is_phishing === 1 ? '#ef4444' : '#10b981'
+                    }}
                   >
-                    <BarChart3 size={15} /> View Feature Importance
+                    {scanResult.model_votes?.random_forest?.confidence}%
+                  </div>
+                  <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                    High-entropy bagged ensemble verifying classification reliability.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* --- SUBTAB 4: THREAT INTELLIGENCE & EXPORT --- */}
+            {resultSubTab === 'export' && (
+              <div style={{ textAlign: 'left', maxWidth: '660px', margin: '0 auto' }}>
+                <div className="info-callout" style={{ marginTop: '10px' }}>
+                  <h3>
+                    <ShieldAlert size={18} /> Threat Intelligence Findings
+                  </h3>
+                  <ul style={{ paddingLeft: '22px', fontSize: '13.5px', color: 'var(--text-secondary)' }}>
+                    {scanResult.threat_indicators?.map((item, idx) => (
+                      <li key={idx} style={{ marginBottom: '8px' }}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button
+                    className="btn-cyber-secondary"
+                    onClick={() => copyToClipboard(JSON.stringify(scanResult, null, 2))}
+                  >
+                    {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? 'Copied JSON!' : 'Copy Client Audit JSON'}
                   </button>
                 </div>
               </div>
             )}
+
+            {/* Action Buttons */}
+            <div className="result-button-row">
+              <button
+                className="btn-cyber-secondary"
+                onClick={() => {
+                  setScanResult(null);
+                  setUrlInput('');
+                }}
+              >
+                <RefreshCw size={15} /> Check Another URL
+              </button>
+              <button
+                className="btn-cyber-primary"
+                onClick={() => setActiveTab('features')}
+              >
+                <BarChart3 size={15} /> View Feature Importance <ArrowRight size={15} />
+              </button>
+            </div>
           </div>
         )}
 
         {/* ================= SCREEN 4: FEATURE IMPORTANCE (PERMUTATION IMPORTANCE) ================= */}
         {activeTab === 'features' && (
-          <div className="white-card">
+          <div className="cyber-card">
             <h2 className="section-title">Feature Analysis</h2>
             <p className="section-sub">
               Here are the most important features used for detection (using Permutation Importance):
@@ -888,13 +927,13 @@ export default function App() {
               </tbody>
             </table>
 
-            {/* Interactive Client Feature Simulator */}
+            {/* Interactive Feature Simulator for Clients */}
             <div className="simulator-box">
               <div className="simulator-title">
                 <Sliders size={18} /> Interactive Feature Simulator (Client Demo Tool)
               </div>
-              <p style={{ fontSize: '13px', color: '#475569' }}>
-                Toggle features in real-time to observe how individual signals influence Phidexion's risk estimation:
+              <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
+                Test how individual security features dynamically change Phidexion's risk score:
               </p>
 
               <div className="simulator-grid">
@@ -908,8 +947,8 @@ export default function App() {
                     onChange={(e) => setSimDomainAge(parseFloat(e.target.value))}
                     className="sim-slider"
                   />
-                  <span style={{ fontSize: '11px', color: '#64748b' }}>
-                    {simDomainAge < 1 ? '⚠️ Brand New (Zero-Day)' : 'Established'}
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    {simDomainAge < 1 ? '⚠️ Brand New Zero-Day Trap' : 'Established Domain Trust'}
                   </span>
                 </div>
 
@@ -934,7 +973,7 @@ export default function App() {
                 </div>
 
                 <div className="sim-control-group">
-                  <label>Suspicious Keywords</label>
+                  <label>Suspicious Keywords in URL</label>
                   <button
                     className={`sim-toggle-btn ${simKeywords ? 'on' : ''}`}
                     onClick={() => setSimKeywords(!simKeywords)}
@@ -946,21 +985,21 @@ export default function App() {
 
               <div className="sim-result-gauge">
                 <div>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>
-                    Simulated Phishing Probability:
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Simulated Threat Score:
                   </span>
                   <span
                     style={{
-                      fontSize: '18px',
+                      fontSize: '20px',
                       fontWeight: 900,
                       marginLeft: '12px',
-                      color: simulatedRisk > 50 ? '#dc2626' : '#16a34a'
+                      color: simulatedRisk > 50 ? '#ef4444' : '#10b981'
                     }}
                   >
                     {simulatedRisk}% ({simulatedRisk > 50 ? 'Malicious' : 'Safe'})
                   </span>
                 </div>
-                <div style={{ width: '160px' }}>
+                <div style={{ width: '180px' }}>
                   <div className="conf-track">
                     <div
                       className={`conf-bar ${simulatedRisk > 50 ? 'bar-red' : 'bar-green'}`}
@@ -973,25 +1012,10 @@ export default function App() {
 
             <div className="info-callout" style={{ marginTop: '24px' }}>
               <h3>
-                <Layers size={17} /> Theoretical Foundation of Permutation Importance
+                <Layers size={18} /> Theoretical Role of Permutation Importance
               </h3>
               <p>
-                Permutation Importance measures the mathematical drop in model accuracy when a feature's values are randomly permuted:
-              </p>
-              <div
-                style={{
-                  background: '#f1f5f9',
-                  padding: '8px 14px',
-                  borderRadius: '6px',
-                  margin: '8px 0',
-                  fontFamily: 'monospace',
-                  fontSize: '12.5px'
-                }}
-              >
-                I(f) = Error(Model on shuffled feature f) - Error(Model on original data)
-              </div>
-              <p>
-                By identifying that <strong>Domain Age</strong> (0.22) and <strong>SSL Validity</strong> (0.18) provide the largest error penalties, Phidexion prunes redundant features, reducing inference latency by 64% without sacrificing precision.
+                Permutation Importance measures the drop in model predictive performance after randomly shuffling the values of a given feature. Influential features—such as <strong>Domain Age (0.22)</strong> and <strong>SSL Certificate Validity (0.18)</strong>—cause significant prediction errors when randomized, whereas redundant features are safely pruned, cutting extraction latency by over 60%.
               </p>
             </div>
           </div>
@@ -999,7 +1023,7 @@ export default function App() {
 
         {/* ================= SCREEN 5: MODEL PERFORMANCE ================= */}
         {activeTab === 'performance' && (
-          <div className="white-card">
+          <div className="cyber-card">
             <h2 className="section-title">Model Performance Comparison</h2>
             <p className="section-sub">
               Empirical evaluation comparing Random Forest and XGBoost across key cybersecurity metrics:
@@ -1061,14 +1085,14 @@ export default function App() {
 
             {/* Banner from Poster */}
             <div className="deployed-callout-banner">
-              <CheckCircle2 size={22} style={{ flexShrink: 0 }} />
+              <CheckCircle2 size={24} style={{ flexShrink: 0 }} />
               <span>
                 XGBoost achieved the best overall performance and is deployed in the application.
               </span>
             </div>
 
-            {/* Confusion Matrix Visualizer */}
-            <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginTop: '32px' }}>
+            {/* Confusion Matrix Heatmaps */}
+            <h3 style={{ fontSize: '17px', fontWeight: 900, color: 'var(--text-primary)', marginTop: '36px' }}>
               Confusion Matrix Benchmark (1,200 Test Samples)
             </h3>
 
@@ -1095,8 +1119,8 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="matrix-card" style={{ borderColor: '#93c5fd' }}>
-                <div className="matrix-title" style={{ color: '#1d4ed8' }}>
+              <div className="matrix-card" style={{ borderColor: 'rgba(6, 182, 212, 0.4)' }}>
+                <div className="matrix-title" style={{ color: '#38bdf8' }}>
                   XGBoost (Production Deployed)
                 </div>
                 <div className="matrix-grid">
@@ -1120,16 +1144,16 @@ export default function App() {
               </div>
             </div>
 
-            {/* Interactive APS Calculator */}
+            {/* Interactive APS Explorer */}
             <div className="simulator-box" style={{ marginTop: '24px' }}>
               <div className="simulator-title">
                 <Activity size={18} /> Interactive Anti-Phishing Score (APS) Explorer
               </div>
-              <p style={{ fontSize: '13px', color: '#475569' }}>
-                Simulate how changes in TPR (catching phishing) and FPR (avoiding false alarms on legitimate banks) alter the composite Anti-Phishing Score:
+              <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
+                Simulate how changes in TPR (catching phishing) and FPR (avoiding false alarms on legitimate banks) alter the composite score:
               </p>
 
-              <div className="simulator-grid" style={{ marginTop: '14px' }}>
+              <div className="simulator-grid" style={{ marginTop: '16px' }}>
                 <div className="sim-control-group">
                   <label>True Positive Rate (TPR): {calcTpr}%</label>
                   <input
@@ -1159,14 +1183,14 @@ export default function App() {
 
               <div className="sim-result-gauge">
                 <div>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
                     Calculated Anti-Phishing Score:
                   </span>
-                  <span style={{ fontSize: '20px', fontWeight: 900, marginLeft: '12px', color: '#2563eb' }}>
+                  <span style={{ fontSize: '22px', fontWeight: 900, marginLeft: '12px', color: '#38bdf8' }}>
                     {computeAps(calcTpr, calcFpr)}%
                   </span>
                 </div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>
+                <div style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
                   APS = (2 &times; TPR &times; (1 - FPR)) / (TPR + (1 - FPR))
                 </div>
               </div>
@@ -1176,7 +1200,7 @@ export default function App() {
 
         {/* ================= SCREEN 6: ABOUT / PROJECT INFORMATION ================= */}
         {activeTab === 'about' && (
-          <div className="white-card">
+          <div className="cyber-card">
             <h2 className="section-title">About Phidexion</h2>
             <p className="about-text-lead">
               Phidexion is an AI-based phishing detection framework that uses machine learning and feature selection to identify malicious websites and protect users from credential theft, online fraud, and other cybersecurity threats.
@@ -1186,7 +1210,7 @@ export default function App() {
             <div className="four-pillars-grid">
               <div className="pillar-card">
                 <div className="pillar-icon-circle">
-                  <BarChart3 size={24} />
+                  <BarChart3 size={26} />
                 </div>
                 <div className="pillar-title">Feature Selection</div>
                 <div className="pillar-sub">(Permutation Importance)</div>
@@ -1194,7 +1218,7 @@ export default function App() {
 
               <div className="pillar-card">
                 <div className="pillar-icon-circle">
-                  <Cpu size={24} />
+                  <Cpu size={26} />
                 </div>
                 <div className="pillar-title">Ensemble ML Models</div>
                 <div className="pillar-sub">(Random Forest &amp; XGBoost)</div>
@@ -1202,7 +1226,7 @@ export default function App() {
 
               <div className="pillar-card">
                 <div className="pillar-icon-circle">
-                  <Server size={24} />
+                  <Server size={26} />
                 </div>
                 <div className="pillar-title">Flask Web App</div>
                 <div className="pillar-sub">(Real-time URL Analysis)</div>
@@ -1210,7 +1234,7 @@ export default function App() {
 
               <div className="pillar-card">
                 <div className="pillar-icon-circle">
-                  <Lock size={24} />
+                  <Lock size={26} />
                 </div>
                 <div className="pillar-title">Secure &amp; Scalable</div>
                 <div className="pillar-sub">Production Ready Architecture</div>
@@ -1218,8 +1242,8 @@ export default function App() {
             </div>
 
             {/* Project Roadmap (From Project Plan) */}
-            <div style={{ marginTop: '36px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '14px' }}>
+            <div style={{ marginTop: '38px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--text-primary)', marginBottom: '16px' }}>
                 Project Development Roadmap
               </h3>
               <div className="roadmap-timeline">
@@ -1262,8 +1286,8 @@ export default function App() {
             </div>
 
             {/* Technology Stack Grid */}
-            <div style={{ marginTop: '36px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '14px' }}>
+            <div style={{ marginTop: '38px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--text-primary)', marginBottom: '16px' }}>
                 Recommended Technology Stack
               </h3>
               <table className="comparison-table">
@@ -1274,7 +1298,7 @@ export default function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td>Frontend Interface</td><td>React 18 + Vite, CSS3 Cyber Design System, Lucide Icons</td></tr>
+                  <tr><td>Frontend Interface</td><td>React 18 + Vite, Cyber Design System, Lucide Icons</td></tr>
                   <tr><td>Backend ML Server</td><td>Python 3.11, Flask REST API with CORS</td></tr>
                   <tr><td>Machine Learning</td><td>Scikit-learn, XGBoost Classifier, Random Forest</td></tr>
                   <tr><td>Feature Selection</td><td>Permutation Feature Importance</td></tr>
@@ -1293,11 +1317,11 @@ export default function App() {
         <div className="history-drawer-overlay" onClick={() => setShowHistory(false)}>
           <div className="history-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="history-drawer-header">
-              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <History size={18} /> URL Scan History
               </h3>
               <button
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
                 onClick={() => setShowHistory(false)}
               >
                 <X size={20} />
@@ -1306,7 +1330,7 @@ export default function App() {
 
             <div style={{ flex: 1 }}>
               {historyList.length === 0 ? (
-                <p style={{ color: '#94a3b8', fontSize: '13px', textAlign: 'center', marginTop: '40px' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', marginTop: '40px' }}>
                   No scans recorded yet. Enter a URL to start scanning.
                 </p>
               ) : (
@@ -1330,7 +1354,7 @@ export default function App() {
                           ? 'pill-danger'
                           : 'pill-safe'
                       }`}
-                      style={{ fontSize: '11px', padding: '2px 10px' }}
+                      style={{ fontSize: '11px', padding: '3px 10px' }}
                     >
                       {item.verdict} ({item.confidence}%)
                     </span>
