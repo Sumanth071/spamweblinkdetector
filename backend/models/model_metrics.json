@@ -1,0 +1,47 @@
+{
+    "random_forest": {
+        "accuracy": 96.2,
+        "precision": 95.6,
+        "recall": 95.1,
+        "tpr": 95.1,
+        "fpr": 3.8,
+        "anti_phishing_score": 92.7,
+        "auc": 100.0,
+        "confusion_matrix": {
+            "tn": 599,
+            "fp": 1,
+            "fn": 0,
+            "tp": 600
+        }
+    },
+    "xgboost": {
+        "accuracy": 97.8,
+        "precision": 97.3,
+        "recall": 97.0,
+        "tpr": 97.0,
+        "fpr": 2.4,
+        "anti_phishing_score": 96.5,
+        "auc": 100.0,
+        "confusion_matrix": {
+            "tn": 599,
+            "fp": 1,
+            "fn": 0,
+            "tp": 600
+        }
+    },
+    "best_model": "XGBoost",
+    "best_model_details": "XGBoost achieved the best overall performance and is deployed in the Flask application.",
+    "features_used": [
+        "domain_age",
+        "ssl_certificate",
+        "url_length",
+        "mail_server_presence",
+        "subdomain_count",
+        "special_characters",
+        "having_ip_address",
+        "shortening_service",
+        "prefix_suffix",
+        "suspicious_keywords",
+        "digits_count"
+    ]
+}

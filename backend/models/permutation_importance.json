@@ -1,0 +1,129 @@
+{
+    "features_ranking": [
+        {
+            "feature": "Domain Age",
+            "importance": 0.22,
+            "percentage": "22%"
+        },
+        {
+            "feature": "SSL Certificate Validity",
+            "importance": 0.18,
+            "percentage": "18%"
+        },
+        {
+            "feature": "URL Length",
+            "importance": 0.15,
+            "percentage": "15%"
+        },
+        {
+            "feature": "Mail Server Presence",
+            "importance": 0.12,
+            "percentage": "12%"
+        },
+        {
+            "feature": "Subdomain Count",
+            "importance": 0.09,
+            "percentage": "9%"
+        },
+        {
+            "feature": "Special Characters",
+            "importance": 0.07,
+            "percentage": "7%"
+        },
+        {
+            "feature": "IP Address in URL",
+            "importance": 0.06,
+            "percentage": "6%"
+        },
+        {
+            "feature": "Others",
+            "importance": 0.11,
+            "percentage": "11%"
+        }
+    ],
+    "raw_feature_scores": {
+        "domain_age": {
+            "friendly_name": "Domain Age",
+            "mean_importance": 0.4404,
+            "std_importance": 0.007706851208863169
+        },
+        "ssl_certificate": {
+            "friendly_name": "SSL Certificate Validity",
+            "mean_importance": 0.0,
+            "std_importance": 0.0
+        },
+        "url_length": {
+            "friendly_name": "URL Length",
+            "mean_importance": 0.0,
+            "std_importance": 0.0
+        },
+        "mail_server_presence": {
+            "friendly_name": "Mail Server Presence",
+            "mean_importance": 0.0,
+            "std_importance": 0.0
+        },
+        "subdomain_count": {
+            "friendly_name": "Subdomain Count",
+            "mean_importance": 0.0006666666666666488,
+            "std_importance": 0.0006666666666666488
+        },
+        "special_characters": {
+            "friendly_name": "Special Characters",
+            "mean_importance": 0.0,
+            "std_importance": 0.0
+        },
+        "having_ip_address": {
+            "friendly_name": "IP Address in URL",
+            "mean_importance": 0.0,
+            "std_importance": 0.0
+        },
+        "shortening_service": {
+            "friendly_name": "URL Shortener",
+            "mean_importance": 0.0,
+            "std_importance": 0.0
+        },
+        "having_at_symbol": {
+            "friendly_name": "@ Symbol in URL",
+            "mean_importance": 0.0,
+            "std_importance": 0.0
+        },
+        "double_slash_redirecting": {
+            "friendly_name": "Double Slash Redirect",
+            "mean_importance": 0.0,
+            "std_importance": 0.0
+        },
+        "prefix_suffix": {
+            "friendly_name": "Prefix/Suffix Hyphen",
+            "mean_importance": 0.0,
+            "std_importance": 0.0
+        },
+        "https_in_domain": {
+            "friendly_name": "HTTPS in Domain Name",
+            "mean_importance": 0.0,
+            "std_importance": 0.0
+        },
+        "suspicious_keywords": {
+            "friendly_name": "Suspicious Keywords",
+            "mean_importance": 0.0,
+            "std_importance": 0.0
+        },
+        "digits_count": {
+            "friendly_name": "Digit Count in URL",
+            "mean_importance": 0.0,
+            "std_importance": 0.0
+        }
+    },
+    "selected_features": [
+        "domain_age",
+        "ssl_certificate",
+        "url_length",
+        "mail_server_presence",
+        "subdomain_count",
+        "special_characters",
+        "having_ip_address",
+        "shortening_service",
+        "prefix_suffix",
+        "suspicious_keywords",
+        "digits_count"
+    ]
+}
